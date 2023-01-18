@@ -15,8 +15,6 @@ int main(){
     printf(">>");
     fgets(input, MAX_LENGTH, stdin);
 
-    printf("you entered %d",currentState);
-
 
     return 0;
 

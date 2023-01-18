@@ -2,7 +2,7 @@
 
 #ifndef OPEN_COMMAND_H
 #define OPEN_COMMAND_H
-typedef struct Command {
+struct Command {
     char *line; // The command line for this command
     char* command; // The command (e.g. ls, exit, cd, cat)
     int argc; // The number of arguments passed to the command
