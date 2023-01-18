@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 // Current input state of shell.
-struct state {
+struct State {
     regex_t in_redirect_regex;
     regex_t out_redirect_regex;
     regex_t err_redirect_regex;
