@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <state.h>
 
 #define MAX_LENGTH 1024
 
@@ -14,7 +15,7 @@ int main(){
     printf(">>");
     fgets(input, MAX_LENGTH, stdin);
 
-    printf("you entered %s",input);
+    printf("you entered %d",currentState);
 
 
     return 0;

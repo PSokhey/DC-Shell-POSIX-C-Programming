@@ -4,7 +4,7 @@
 #define OPEN_STATE_H
 
 // States to be used for shell.
-enum state {
+enum FSMState {
     INIT_STATE, // Initial shell state.
     READ_COMMANDS, // Reading command state.
     SEPARATE_COMMANDS, // Tokenize teh comm.
