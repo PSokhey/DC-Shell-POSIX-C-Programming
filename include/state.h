@@ -19,7 +19,21 @@ enum FSMState {
     DESTROY_STATE // Clean memory before closing program.
 };
 
-// example function of functions being used.
+// example function of functions being used, to be moved later.
+// currently are empty and just placeholders.
+int init_state();
+int read_commands();
+int handler_error();
+int reset_state();
+int separate_commands();
+int handler_error();
+int parse_commands();
+int execute_commands();
+int reset_state();
+int do_exit();
+int destroy_state();
+
+
 
 // Following taken from word example of transitioning states.
 static struct dc_fsm_transition transitions[] = {
