@@ -9,7 +9,7 @@ int init_state(const struct dc_env *env, struct dc_error *err, struct state* sta
 };
 int read_commands(const struct dc_env *env, struct dc_error *err, struct state *currentState) {
     char command[100];
-    printf("Enter a command %s: ");
+    printf("Enter a command: ");
     scanf("%s", command);
     return SEPARATE_COMMANDS;
 };
