@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+
+
 // States to be used for shell.
 enum FSMState {
     INIT_STATE = DC_FSM_USER_START, // Initial shell state.
@@ -37,6 +39,8 @@ struct state {
 };
 
 static struct state* create_state() {
+
+    // Allocate memory for struct.
     struct state* new_state = malloc(sizeof(struct state));
     if (!new_state) {
         // handle allocation error
@@ -74,26 +78,6 @@ static struct state* create_state() {
         free(new_state);
         return NULL;
     }
-
-    // get the PATH environment variable
-    char* path_env = getenv("PATH");
-    if (path_env != NULL) {
-        // split PATH into an array, separate by :
-        //new_state->paths = split_string(path_env, ':');
-    }
-
-    // get the PS1 environment variable
-    char* ps1_env = getenv("PS1");
-    if (ps1_env != NULL) {
-        // set state.prompt to the PS1 value
-        new_state->prompt = strdup(ps1_env);
-    } else {
-        // set state.prompt to " $ "
-        new_state->prompt = strdup(" $ ");
-    }
-
-    // set state.max_line_length to _SC_ARG_MAX via sysconf()
-    new_state->max_line_length = sysconf(_SC_ARG_MAX);
 
     return new_state;
 }

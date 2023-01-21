@@ -33,7 +33,7 @@ void run_shell()
     struct dc_env *env;
     int from_state, to_state;
     struct dc_fsm_info *fsm_info;
-    struct state* currentState = currentState;
+    struct state* currentState = malloc(sizeof(struct state));
 
     err = dc_error_create(true);
     tracer = dc_env_create(err,false, tracer);
