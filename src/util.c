@@ -16,17 +16,40 @@ static size_t count(const char *str, int c) {
     return num;
 }
 
-char** split_string(const char* str, const char* delim) {
+char** split_string(const char* other, const char* delim) {
+    char* str = strdup("aa:dff:dfe");
+    char *state;
+    char* token;
+    size_t num;
+    char **list;
+    size_t i;
 
-    char* strTest = strdup("ah:ke:ef"); // only for testing and should be deleted later.
-    char*token;
-    size_t numOfTokens;
-    char** result;  // resulting list of paths
+    state = str;
+    num = count(str, delim);
+    printf("Number: %d\n",num);
+    list = calloc( num + 2, sizeof(char*));
+    i = 0;
 
-    // count the number of tokens
-    numOfTokens = count(strTest, delim);
-    printf("%d",numOfTokens);
+    while((token = strtok_r(state, ":", &state)) != NULL) {
+        list[i] = strdup(token);
+        i++;
+    }
 
-    return result;
+    // for test purposes only. 
+    printf("%s\n",list[0]);
+    printf("%s\n",list[1]);
+    printf("%s\n",list[2]);
+
+
+    list[i] = NULL;
+    free(str);
+
+
+
+    return list;
 }
+
+
+
+
 
