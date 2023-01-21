@@ -16,17 +16,17 @@ static size_t count(const char *str, int c) {
     return num;
 }
 
-char** split_string(const char* other, const char* delim) {
-    char* str = strdup("aa:dff:dfe");
+char** split_string(const char* path, const char* delim) {
+    //char* str = strdup("aa:dff:dfe");
     char *state;
     char* token;
     size_t num;
     char **list;
     size_t i;
 
-    state = str;
-    num = count(str, delim);
-    printf("Number: %d\n",num);
+    state = path;
+    num = count(path, delim);
+    //printf("Number: %d\n",num);
     list = calloc( num + 2, sizeof(char*));
     i = 0;
 
@@ -35,14 +35,14 @@ char** split_string(const char* other, const char* delim) {
         i++;
     }
 
-    // for test purposes only. 
-    printf("%s\n",list[0]);
+    // for test purposes only.
+/*    printf("%s\n",list[0]);
     printf("%s\n",list[1]);
-    printf("%s\n",list[2]);
+    printf("%s\n",list[2]);*/
 
 
     list[i] = NULL;
-    free(str);
+    //free(str);
 
 
 

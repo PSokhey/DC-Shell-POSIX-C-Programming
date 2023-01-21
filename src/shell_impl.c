@@ -2,6 +2,8 @@
 #include <string.h>
 #include <util.h>
 
+#define MAX_WORKING_DIR_LENGTH 4096
+
 
 // example function of functions being used, to be moved later.
 // currently are empty and just placeholders.
@@ -53,6 +55,11 @@ int init_state(const struct dc_env *env, struct dc_error *err, struct state* new
         printf("%s\n",path_env);
         new_state->paths = split_string(path_env,  ':'); // NEED TO IMPLIMINT
 
+
+        //for testing path variable
+        //printf("%s",new_state->paths[0]);
+        //printf("%s",new_state->paths[1]);
+
     }
 
     // get the PS1 environment variable
@@ -71,9 +78,20 @@ int init_state(const struct dc_env *env, struct dc_error *err, struct state* new
     return READ_COMMANDS;
 };
 int read_commands(const struct dc_env *env, struct dc_error *err, struct state *currentState) {
-    char command[100];
-    printf("[%s]Enter a command: ", currentState->prompt);
-    scanf("%s", command);
+    char commandInput[100] ;
+    char workingDir[MAX_WORKING_DIR_LENGTH];
+
+
+    if(getcwd(workingDir, sizeof (workingDir)) == NULL) {
+        currentState->fatal_error = true;
+        return ERROR;
+    }
+
+    // display working directory to the user with the assigned prompt.
+
+    // Get the current working directory.
+    printf("[%s] $ ",workingDir, currentState->prompt);
+    scanf("%s", commandInput);
     return SEPARATE_COMMANDS;
 };
 int reset_state(const struct dc_env *env, struct dc_error *err, void *arg){
@@ -103,3 +121,5 @@ int destroy_state(const struct dc_env *env, struct dc_error *err, void *arg) {
     printf("Destroying state...\n");
     return DC_FSM_EXIT;
 };
+
+int handler_error(const struct dc_env *env, struct dc_error *err, void *arg);

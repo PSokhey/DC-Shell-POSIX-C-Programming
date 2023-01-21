@@ -17,5 +17,6 @@ int execute_commands(const struct dc_env *env, struct dc_error *err, void *arg);
 int do_exit(const struct dc_env *env, struct dc_error *err, void *arg);
 int handler_error(const struct dc_env *env, struct dc_error *err, void *arg);
 int destroy_state(const struct dc_env *env, struct dc_error *err, void *arg);
+int handler_error(const struct dc_env *env, struct dc_error *err, void *arg);
 
 #endif //OPEN_SHELL_IMPL_H
