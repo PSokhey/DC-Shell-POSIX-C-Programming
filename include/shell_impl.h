@@ -8,10 +8,10 @@
 
 // example function of functions being used, to be moved later.
 // currently are empty and just placeholders.
-int init_state(const struct dc_env *env, struct dc_error *err, void *arg);
-int read_commands(const struct dc_env *env, struct dc_error *err, void *arg);
+int init_state(const struct dc_env *env, struct dc_error *err, struct state *currentState);
+int read_commands(const struct dc_env *env, struct dc_error *err, struct state *currentState);
 int reset_state(const struct dc_env *env, struct dc_error *err, void *arg);
-int separate_commands(const struct dc_env *env, struct dc_error *err, void *arg);
+int separate_commands(const struct dc_env *env, struct dc_error *err, struct state *currentState);
 int parse_commands(const struct dc_env *env, struct dc_error *err, void *arg);
 int execute_commands(const struct dc_env *env, struct dc_error *err, void *arg);
 int do_exit(const struct dc_env *env, struct dc_error *err, void *arg);

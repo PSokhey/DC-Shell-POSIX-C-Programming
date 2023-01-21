@@ -1,4 +1,6 @@
 #include <shell.h>
+#include <stdlib.h>
+
 
 void run_shell()
 {
@@ -31,15 +33,25 @@ void run_shell()
     struct dc_env *env;
     int from_state, to_state;
     struct dc_fsm_info *fsm_info;
+    struct state* currentState = currentState;
 
     err = dc_error_create(true);
     tracer = dc_env_create(err,false, tracer);
 
     // this initiates and creates the current fsm.
-    fsm_info = dc_fsm_info_create(env, err, "TestFSM");
+    fsm_info = dc_fsm_info_create(env, err, "ShellFSM");
+
+    // running of the shell.
+    //ar arg is the sate
 
 
-    dc_fsm_run(env, err, fsm_info, &from_state, &to_state, NULL, transitions);
+    dc_fsm_run(env, err, fsm_info, &from_state, &to_state, currentState, transitions);
+
+    // free any memory.
     dc_fsm_info_destroy(env, fsm_info);
+    free(currentState->current_line);
+    free(currentState->prompt);
+    free(currentState->paths);
+    free(currentState);
 
 }

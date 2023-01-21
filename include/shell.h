@@ -9,7 +9,6 @@
 #include <dc_fsm/fsm.h>
 #include <dc_posix/dc_time.h>
 #include <ctype.h>
-#include <stdio.h>
 #include <string.h>
 #include <dc_error/error.h>
 

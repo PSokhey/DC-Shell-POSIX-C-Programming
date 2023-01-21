@@ -3,13 +3,13 @@
 
 // example function of functions being used, to be moved later.
 // currently are empty and just placeholders.
-int init_state(const struct dc_env *env, struct dc_error *err, void *arg){
-    printf("Initializing state...\n");
+int init_state(const struct dc_env *env, struct dc_error *err, struct state* state){
+
     return READ_COMMANDS;
 };
-int read_commands(const struct dc_env *env, struct dc_error *err, void *arg) {
+int read_commands(const struct dc_env *env, struct dc_error *err, struct state *currentState) {
     char command[100];
-    printf("Enter a command: ");
+    printf("Enter a command %s: ");
     scanf("%s", command);
     return SEPARATE_COMMANDS;
 };
@@ -17,7 +17,7 @@ int reset_state(const struct dc_env *env, struct dc_error *err, void *arg){
     printf("Resetting state..\n");
     return READ_COMMANDS;
 };
-int separate_commands(const struct dc_env *env, struct dc_error *err, void *arg){
+int separate_commands(const struct dc_env *env, struct dc_error *err, struct state *currentState){
     printf("Seperating commands...\n");
     return PARSE_COMMANDS;
 };
