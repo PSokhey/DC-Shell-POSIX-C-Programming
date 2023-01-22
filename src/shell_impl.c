@@ -16,6 +16,16 @@ int init_state(const struct dc_env *env, struct dc_error *err, struct state* new
         return NULL;
     }*/
 
+    // initial error handling
+    if (checkError(err, new_state)) {
+        new_state->fatal_error = true;
+        perror("Error before initializing state");
+        return EXIT_FAILURE;
+    }
+
+    // set state.max_line_length to _SC_ARG_MAX via sysconf()
+    new_state->max_line_length = sysconf(_SC_ARG_MAX);
+
     // initialize all variables
     new_state->paths = NULL;
     new_state->prompt = NULL;
@@ -48,6 +58,8 @@ int init_state(const struct dc_env *env, struct dc_error *err, struct state* new
         return NULL;
     }
 
+
+
     // get the PATH environment variable
     char* path_env = getenv("PATH");
     if (path_env != NULL) {
@@ -72,8 +84,7 @@ int init_state(const struct dc_env *env, struct dc_error *err, struct state* new
         new_state->prompt = strdup(" $ ");
     }
 
-    // set state.max_line_length to _SC_ARG_MAX via sysconf()
-    new_state->max_line_length = sysconf(_SC_ARG_MAX);
+
 
     return READ_COMMANDS;
 };
@@ -116,10 +127,20 @@ int do_exit(const struct dc_env *env, struct dc_error *err, void *arg){
 };
 int handler_error(const struct dc_env *env, struct dc_error *err, void *arg){
     printf("Handling error...\n");
+
+    // temporary to keep fsm going and needs to be properly handled.
+    return READ_COMMANDS;
 };
 int destroy_state(const struct dc_env *env, struct dc_error *err, void *arg) {
     printf("Destroying state...\n");
     return DC_FSM_EXIT;
-};
+}
 
-int handler_error(const struct dc_env *env, struct dc_error *err, void *arg);
+// check if there is an error or not.
+bool checkError(struct dc_error* err, struct state* currentState) {
+    if (err != NULL && dc_error_has_error(err)) {
+        currentState->fatal_error = true;
+        return true;
+    } else
+        return false;
+}

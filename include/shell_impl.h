@@ -19,4 +19,6 @@ int handler_error(const struct dc_env *env, struct dc_error *err, void *arg);
 int destroy_state(const struct dc_env *env, struct dc_error *err, void *arg);
 int handler_error(const struct dc_env *env, struct dc_error *err, void *arg);
 
+bool checkError(struct dc_error* err, struct state* currentState);
+
 #endif //OPEN_SHELL_IMPL_H
