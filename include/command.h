@@ -4,9 +4,11 @@
 #define OPEN_COMMAND_H
 
 #include <stdbool.h>
+#include <stdlib.h>
+#include <fcntl.h>
 
 // Pointers might change to char*.
-struct Command {
+struct command {
     char *line; // The command line for this command
     char* command; // The command (e.g. ls, exit, cd, cat)
     int argc; // The number of arguments passed to the command
@@ -17,5 +19,9 @@ struct Command {
     bool stderr_overwrite; // Append to or truncate the stderr file
     int exit_code; // The status returned from the command
 };
+
+static struct command* createCommand();
+
+void destoryCommandStruct(struct command);
 
 #endif //OPEN_COMMAND_H

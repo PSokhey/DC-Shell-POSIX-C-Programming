@@ -7,6 +7,7 @@
 #include <regex.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 
 
@@ -35,6 +36,9 @@ struct state {
     size_t current_line_length; // The length of the current command line
     struct Command *command; // The command to execute
     bool fatal_error; // True if an error happened that should exit the shell
+    FILE *stdin;
+    FILE *stdout;
+    FILE *sterr;
 
 };
 
