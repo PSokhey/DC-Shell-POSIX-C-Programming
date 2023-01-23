@@ -56,6 +56,7 @@ int shell() {
     if (dc_error_has_no_error(err)) {
         int from_state, to_state;
         struct state* currentState = calloc(1,sizeof(struct state));
+        memset(currentState, 0, sizeof(struct state));
         ret_val = dc_fsm_run(env, err, fsm_info, &from_state,&to_state, currentState, transitions);
         dc_fsm_info_destroy(env, &fsm_info);
     }

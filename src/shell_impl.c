@@ -16,21 +16,28 @@
 #include <dc_util/strings.h>
 #include <dc_util/filesystem.h>
 
-typedef struct command command;
-regex_t err_regex;
-regex_t in_regex;
-regex_t out_regex;
+//typedef struct command command;
+//regex_t err_regex;
+//regex_t in_regex;
+//regex_t out_regex;
 
+// Initiating the current state.
 int init_state(const struct dc_env *env, struct dc_error *err, struct state* currentState) {
+    regex_t err_regex;
+    regex_t in_regex;
+    regex_t out_regex;
 
-    memset(currentState, 0, sizeof(struct state));
-    currentState->fatal_error = false;
     currentState->max_line_length = sysconf(_SC_ARG_MAX);
+    int regcomp_result_in = regcomp(&in_regex, "[ \t\f\v]<.*", REG_EXTENDED);
+    int regcomp_result_out = regcomp(&out_regex, "[ \t\f\v][1^2]?>[>]?.*", REG_EXTENDED);
+    int regcomp_result_err = regcomp(&err_regex, "[ \t\f\v]2>[>]?.*", REG_EXTENDED);
 
-    regcomp(&in_regex, "[ \t\f\v]<.*", REG_EXTENDED);
-    regcomp(&out_regex, "[ \t\f\v][1^2]?>[>]?.*", REG_EXTENDED);
-    regcomp(&err_regex, "[ \t\f\v]2>[>]?.*", REG_EXTENDED);
+    if (regcomp_result_in != 0 || regcomp_result_out != 0 || regcomp_result_err != 0) {
+        printf("Unable to combile REGEX");
+        return ERROR;
+    }
 
+    currentState->fatal_error = false;
     currentState->in_redirect_regex = &in_regex;
     currentState->out_redirect_regex = &out_regex;
     currentState->err_redirect_regex = &err_regex;
@@ -39,48 +46,47 @@ int init_state(const struct dc_env *env, struct dc_error *err, struct state* cur
     currentState->command = (struct command *) calloc(1,sizeof(struct command));
     currentState->command->line = NULL;
 
-    if (err != NULL && dc_error_has_error(err)) {
-        currentState->fatal_error = true;
-        printf("DC HAS ERROR IN MAIN IF STATEMENT");
-        return EXIT_FAILURE;
+    if (hasErrorOccured(err, currentState, "Could not initialize.")) {
+        return ERROR;
     }
     return READ_COMMANDS;
 }
 
-
+// read input from user.
 int read_commands(const struct dc_env *env, struct dc_error *err, struct state* currentState) {
     currentState->fatal_error = 0;
-    size_t line_len = 0;
+    size_t inputLineLength = 0;
+    char *workingDir = dc_get_working_dir(env, err);
 
-    char *cur_dir = dc_get_working_dir(env, err);
-    if (dc_error_has_error(err)) {
-        currentState->fatal_error = true;
+
+    if (hasErrorOccured(err, currentState, "Unable to get current working directory.")) {
         return ERROR;
     }
 
-    //p: this is dislplaying directory to user.
-    fprintf(stdout, "[%s] %s", cur_dir, currentState->prompt);
+    // Print the current directory for the user.
+    fprintf(stdout, "[%s] %s", workingDir, currentState->prompt);
     currentState->current_line = malloc(sizeof(char));
-
-    if (dc_error_has_error(err)) {
-        currentState->fatal_error = true;
-    }
-
-    dc_getline(env, err, &currentState->current_line, &line_len, stdin);
-    if (dc_error_has_error(err)) {
-        currentState->fatal_error = true;
+    if (hasErrorOccured(err, currentState, "Could not take input.")) {
         return ERROR;
     }
 
+    // Get the line input and check for error.
+    dc_getline(env, err, &currentState->current_line, &inputLineLength, stdin);
+    if (hasErrorOccured(err, currentState, "Unable to get line from user.")) {
+        return ERROR;
+    }
+
+    // Clean input, display input to user, and take line length.
     dc_str_trim(env, currentState->current_line);
     printf("Command: %s\n", currentState->current_line);
-    line_len = strlen(currentState->current_line);
+    inputLineLength = strlen(currentState->current_line);
 
-    if (line_len == 0) {
+    // If the user only pressed enter, reset.
+    if (inputLineLength == 0) {
         return RESET_STATE;
     }
 
-    currentState->current_line_length = line_len;
+    currentState->current_line_length = inputLineLength;
 
     return SEPARATE_COMMANDS;
 }
@@ -92,7 +98,7 @@ int separate_commands(const struct dc_env *env, struct dc_error *err, struct sta
         return ERROR;
     }
 
-    currentState->command = calloc(1, sizeof(command));
+    currentState->command = calloc(1, sizeof(struct command));
 
 
     if (currentState->command == NULL) {
@@ -220,7 +226,19 @@ int handle_run_error(const struct dc_env *env, struct dc_error *err, struct stat
     }
 }
 
+bool hasErrorOccured(struct dc_error* err, struct state* currentState, char* errorMessage) {
+    if (err != NULL && dc_error_has_error(err)) {
+        currentState->fatal_error = true;
+        printf("Fatal Error: %s,\n",errorMessage);
+        return true;
+    }
+
+    else {
+        return false;
+    }
+}
+
 int destroy_state(const struct dc_env *env, struct dc_error *err, struct state* currentState) {
-    reset_state(env, err, currentState);
+    //reset_state(env, err, currentState);
     return DC_FSM_EXIT;
 }
