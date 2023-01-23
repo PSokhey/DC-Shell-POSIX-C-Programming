@@ -5,6 +5,8 @@
 #include <dc_error/error.h>
 #include <dc_fsm/fsm.h>
 #include "command.h"
+#include <stddef.h>
+#include <stdlib.h>
 enum shell_states
 {
     INIT_STATE = DC_FSM_USER_START,
@@ -18,7 +20,7 @@ enum shell_states
     DESTROY_STATE,
 };
 
-int run_shell(struct dc_env *env, struct dc_error *err);
+int shell();
 
 int run(const struct dc_env *env, struct dc_error *err, struct command *command, char **path);
 
