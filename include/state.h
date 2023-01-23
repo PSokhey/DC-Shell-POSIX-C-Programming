@@ -1,10 +1,13 @@
 #ifndef DC_SHELL_STATE_H
 #define DC_SHELL_STATE_H
 
-#include <regex.h>
 #include <stdbool.h>
+#include <regex.h>
+#include "command.h"
 
-struct command;
+//struct command;
+
+// State struct for keeping the state of the program.
 struct state {
     regex_t *in_redirect_regex;
     regex_t *out_redirect_regex;

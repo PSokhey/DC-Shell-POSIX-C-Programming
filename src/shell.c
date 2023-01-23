@@ -62,7 +62,7 @@ int shell() {
     return ret_val;
 }
 
-// P: for running the command. no in main, thats all above.
+
 int run(const struct dc_env *env, struct dc_error *err, struct command *command, char **path) {
 
     if (strstr(command->command, "/") != NULL) {
