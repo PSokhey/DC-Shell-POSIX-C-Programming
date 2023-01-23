@@ -34,7 +34,7 @@ struct state {
     size_t max_line_length; // The longest possible command line
     char *current_line; // The current command line
     size_t current_line_length; // The length of the current command line
-    struct Command *command; // The command to execute
+    struct command *command; // The command to execute
     bool fatal_error; // True if an error happened that should exit the shell
     FILE *stdin;
     FILE *stdout;

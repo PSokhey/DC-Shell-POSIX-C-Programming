@@ -21,8 +21,6 @@ struct command {
     int exit_code; // The status returned from the command
 };
 
-static struct command* createCommand();
 
-void destoryCommandStruct(struct command);
 
 #endif //OPEN_COMMAND_H

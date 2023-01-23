@@ -1,11 +1,6 @@
 #include <shell_impl.h>
-#include <dc_posix/dc_stdio.h>
-#include <dc_util/strings.h>
-#include <dc_util/filesystem.h>
-#include <string.h>
-#include <util.h>
 
-#define MAX_WORKING_DIR_LENGTH 4096
+
 
 
 // example function of functions being used, to be moved later.
@@ -86,22 +81,53 @@ int read_commands(const struct dc_env *env, struct dc_error *err, struct state *
     currentState->current_line_length = cmdLineLength;
     return SEPARATE_COMMANDS;
 };
-int reset_state(const struct dc_env *env, struct dc_error *err, void *arg){
-    printf("Resetting state..\n");
-    return READ_COMMANDS;
-};
+
 int separate_commands(const struct dc_env *env, struct dc_error *err, struct state *currentState){
     printf("Seperating commands...\n");
+
+    if(checkError(err, currentState, "Could not read command")) {
+        return ERROR;
+    }
+
+    // making a new command object
+    currentState->command = createCommand();
+    if (currentState->command == NULL) {
+        return ERROR;
+    }
+
+    // passing the command from the state to the command struct.
+    currentState->command->line = strdup(currentState->current_line);
+
+    // If an error with the line be passed.
+    if (currentState->command->line == NULL) {
+        free(currentState->command);
+        return ERROR;
+    }
+
     return PARSE_COMMANDS;
 };
-int parse_commands(const struct dc_env *env, struct dc_error *err, void *arg){
+int parse_commands(const struct dc_env *env, struct dc_error *err, struct state* currentState){
     printf("Parsing commands...\n");
+
+    // call function to parse the command.
+    parse_command(env, err, currentState);
+
+    // error check the parse.
+    if(checkError(err, currentState, "Could not parse command")) {
+        return ERROR;
+    }
+
     return EXECUTE_COMMANDS;
 };
 int execute_commands(const struct dc_env *env, struct dc_error *err, void *arg){
     printf("Executing commands...\n");
     return RESET_STATE;
 };
+int reset_state(const struct dc_env *env, struct dc_error *err, void *arg){
+    printf("Resetting state..\n");
+    return READ_COMMANDS;
+};
+
 int do_exit(const struct dc_env *env, struct dc_error *err, void *arg){
     printf("Exiting program...");
     return DESTROY_STATE;
@@ -125,4 +151,35 @@ bool checkError(struct dc_error* err, struct state* currentState,const char* err
         return true;
     } else
         return false;
+}
+
+static struct command* createCommand(){
+
+    // allocate new memory for the struct.
+    struct command* newCommand = calloc(1,sizeof(struct command));
+
+    // initial setup for the command struct.
+    newCommand->command = NULL;
+    newCommand->argc = 0;
+    newCommand->argv = NULL;
+    newCommand->exit_code = 0;
+    newCommand->line = NULL;
+    newCommand->std_overwrite = false;
+    newCommand->stderr_overwrite = false;
+    newCommand->stdin_file = NULL;
+    newCommand->stdout_file = NULL;
+
+    // Set the stdin_file field to redirect input from a file
+    //newCommand->stdin_file = open("input.txt", O_RDONLY);
+
+    // Set the stdout_file field to redirect output to a file
+    //newCommand->stdout_file = open("output.txt", O_WRONLY | O_CREAT | O_TRUNC);
+
+    return newCommand;
+}
+
+int parse_command(const struct dc_env *env, struct dc_error *err, struct state *currentState) {
+    printf("parse  command was called by parse commands");
+
+    return EXECUTE_COMMANDS;
 }
