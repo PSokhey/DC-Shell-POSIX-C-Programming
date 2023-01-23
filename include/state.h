@@ -26,9 +26,9 @@ enum FSMState {
 
 // Current input state of shell.
 struct state {
-    regex_t in_redirect_regex; // Find input redirection: < path
-    regex_t out_redirect_regex; // Find output redirection: [1]>[>] path
-    regex_t err_redirect_regex; // Find output redirection: 2>[>] path
+    regex_t *in_redirect_regex; // Find input redirection: < path
+    regex_t *out_redirect_regex; // Find output redirection: [1]>[>] path
+    regex_t *err_redirect_regex; // Find output redirection: 2>[>] path
     char **paths; //pointer to an array of directories. // An array of directories to search for external commands
     char *prompt; // prompt for the user, default $
     size_t max_line_length; // The longest possible command line

@@ -19,31 +19,10 @@ int init_state(const struct dc_env *env, struct dc_error *err, struct state* new
     }
 
     // set state.max_line_length to _SC_ARG_MAX via sysconf()
-    new_state->max_line_length = sysconf(_SC_ARG_MAX);
+    regcomp(&new_state->in_redirect_regex , "[ \t\f\v]<.*", REG_EXTENDED);
+    regcomp(&new_state->out_redirect_regex , "[ \t\f\v][1^2]?>[>]?.*", REG_EXTENDED);
+    regcomp(&new_state->err_redirect_regex , "[ \t\f\v]2>[>]?.*", REG_EXTENDED);
 
-    // Setting redirect REGEX.
-    int ret_code = regcomp(&new_state->in_redirect_regex, "[ \t\f\v]<.*", REG_EXTENDED);
-    if (ret_code != 0) {
-        // handle regular expression compilation error
-        free(new_state);
-        return NULL;
-    }
-    ret_code = regcomp(&new_state->out_redirect_regex, "[ \t\f\v][1^2]?>[>]?.*", REG_EXTENDED);
-    if (ret_code != 0) {
-        // handle regular expression compilation error
-        regfree(&new_state->in_redirect_regex);
-        free(new_state);
-        return NULL;
-    }
-    ret_code = regcomp(&new_state->err_redirect_regex, "[ \t\f\v]2>[>]?.*", REG_EXTENDED);
-    if (ret_code != 0) {
-        // handle regular expression compilation error
-        regfree(&new_state->in_redirect_regex);
-        regfree(&new_state->out_redirect_regex);
-        free(new_state);
-        return NULL;
-
-    }
 
     // get the PATH environment variable
     char* path_env = getenv("PATH");
