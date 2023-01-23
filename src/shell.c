@@ -10,8 +10,6 @@
 #include "util.h"
 
 int shell() {
-    int ret_val;
-    struct dc_fsm_info *fsm_info;
     static struct dc_fsm_transition transitions[] = {
             {DC_FSM_INIT,       INIT_STATE,        init_state},
             {INIT_STATE,        READ_COMMANDS,     read_commands},
@@ -33,30 +31,32 @@ int shell() {
             {DESTROY_STATE,     DC_FSM_EXIT, NULL},
     };
 
+
+    int ret_val; // For return code.
+    struct dc_fsm_info *fsm_info; // Struct for running the Finite State Machine.
     dc_env_tracer tracer; // To trace the program.
     struct dc_env *env; // For error handling.
     struct dc_error *err; // environment of the program.
 
-    //int return_val = 0;
-
-    // Turn the tracer (tracing the program) on or off.
+    // setting to trace the program.
     tracer = dc_env_default_tracer;
     //tracer = NULL;
 
+    // initiating the error, environment, and tracing variables.
     err = dc_error_create(false);
     env = dc_env_create(err, false, tracer);
-    dc_env_set_tracer(env, tracer);
-    //dc_error_init(err, false);
 
-    //dc_error_init(err, false);
+    // Set the tracer to dc_env.
+    //dc_env_set_tracer(env, tracer);
     dc_env_set_tracer(env, NULL);
+
+    // set struct to run the FSM and the state struct to run program.
     ret_val = EXIT_SUCCESS;
-    fsm_info = dc_fsm_info_create(env, err, "shell");
+    fsm_info = dc_fsm_info_create(env, err, "Running Shell");
     if (dc_error_has_no_error(err)) {
         int from_state, to_state;
-        struct state state;
-        ret_val = dc_fsm_run(env, err, fsm_info, &from_state,
-                             &to_state, &state, transitions);
+        struct state* currentState = calloc(1,sizeof(struct state));
+        ret_val = dc_fsm_run(env, err, fsm_info, &from_state,&to_state, currentState, transitions);
         dc_fsm_info_destroy(env, &fsm_info);
     }
     return ret_val;

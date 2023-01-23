@@ -7,7 +7,9 @@
 #include "command.h"
 #include <stddef.h>
 #include <stdlib.h>
-enum shell_states
+
+// States defined for the Finite State Machine.
+enum FSMState
 {
     INIT_STATE = DC_FSM_USER_START,
     READ_COMMANDS,
@@ -20,6 +22,7 @@ enum shell_states
     DESTROY_STATE,
 };
 
+// Called to run the shell.
 int shell();
 
 int run(const struct dc_env *env, struct dc_error *err, struct command *command, char **path);
