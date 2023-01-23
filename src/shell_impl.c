@@ -1,5 +1,6 @@
 #include <dc_error/error.h>
 #include <dc_env/env.h>
+#include <malloc.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -35,7 +36,7 @@ int init_state(const struct dc_env *env, struct dc_error *err, struct state* cur
     currentState->err_redirect_regex = &err_regex;
     currentState->path = get_path(env, err, currentState);
     get_prompt(env, err, currentState);
-    currentState->command = (struct command *) malloc(sizeof(struct command));
+    currentState->command = (struct command *) calloc(1,sizeof(struct command));
     currentState->command->line = NULL;
 
     if (err != NULL && dc_error_has_error(err)) {
@@ -59,8 +60,8 @@ int read_commands(const struct dc_env *env, struct dc_error *err, struct state* 
 
     //p: this is dislplaying directory to user.
     fprintf(stdout, "[%s] %s", cur_dir, currentState->prompt);
-
     currentState->current_line = malloc(sizeof(char));
+
     if (dc_error_has_error(err)) {
         currentState->fatal_error = true;
     }
@@ -92,6 +93,7 @@ int separate_commands(const struct dc_env *env, struct dc_error *err, struct sta
     }
 
     currentState->command = calloc(1, sizeof(command));
+
 
     if (currentState->command == NULL) {
         return ERROR;
@@ -179,35 +181,38 @@ int handle_error(const struct dc_env *env, struct dc_error *err, struct state* c
 }
 
 int handle_run_error(const struct dc_env *env, struct dc_error *err, struct state* currentState) {
+
+    char* test = "worked";
+
     if (dc_error_is_errno(err, E2BIG)) {
-        fprintf(stdout, "[%s] Argument list too long\n", currentState->command->command);
+        fprintf(stdout, "Argument list too long\n");
         return 1;
     } else if (dc_error_is_errno(err, EACCES)) {
-        fprintf(stdout, "[%s] Permission denied\n", currentState->command->command);
+        fprintf(stdout, "Permission denied\n");
         return 2;
     } else if (dc_error_is_errno(err, EINVAL)) {
-        fprintf(stdout, "[%s] Invalid argument\n", currentState->command->command); //may be an issue.
+        fprintf(stdout, "Invalid argument\n");
         return 3;
     } else if (dc_error_is_errno(err, ELOOP)) {
-        fprintf(stdout, "[%s] Too many symbolic links encountered\n", currentState->command->command);
+        fprintf(stdout, "[%s] Too many symbolic links encountered\n");
         return 4;
     } else if (dc_error_is_errno(err, ENAMETOOLONG)) {
-        fprintf(stdout, "[%s] File name too long\n", currentState->command->command);
+        fprintf(stdout, "[%s] File name too long\n");
         return 5;
     } else if (dc_error_is_errno(err, ENOENT)) {
-        fprintf(stdout, "[%s] No such file or directory\n", currentState->command->command);
+        fprintf(stdout, "No such file or directory\n");
         return 127;
     } else if (dc_error_is_errno(err, ENOTDIR)) {
-        fprintf(stdout, "[%s] Not a directory\n", currentState->command->command);
+        fprintf(stdout, "[%s] Not a directory\n");
         return 6;
     } else if (dc_error_is_errno(err, ENOEXEC)) {
-        fprintf(stdout, "[%s] Exec format error\n", currentState->command->command);
+        fprintf(stdout, "[%s] Exec format error\n");
         return 7;
     } else if (dc_error_is_errno(err, ENOMEM)) {
-        fprintf(stdout, "[%s] Out of memory\n", currentState->command->command);
+        fprintf(stdout, "[%s] Out of memory\n");
         return 8;
     } else if (dc_error_is_errno(err, ETXTBSY)) {
-        fprintf(stdout, "[%s] Text file busy\n", currentState->command->command);
+        fprintf(stdout, "[%s] Text file busy\n");
         return 9;
     } else {
         return 125;
