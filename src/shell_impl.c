@@ -7,6 +7,7 @@
 
 // example function of functions being used, to be moved later.
 // currently are empty and just placeholders.
+//CLEAR
 int init_state(const struct dc_env *env, struct dc_error *err, struct state* new_state){
 
 /*    // Allocate memory for struct.
@@ -17,25 +18,14 @@ int init_state(const struct dc_env *env, struct dc_error *err, struct state* new
     }*/
 
     // initial error handling
-    if (checkError(err, new_state)) {
-        new_state->fatal_error = true;
-        perror("Error before initializing state");
-        return EXIT_FAILURE;
+    if (checkError(err, new_state,"Error before initializing state")) {
+        return ERROR;
     }
 
     // set state.max_line_length to _SC_ARG_MAX via sysconf()
     new_state->max_line_length = sysconf(_SC_ARG_MAX);
 
-    // initialize all variables
-    new_state->paths = NULL;
-    new_state->prompt = NULL;
-    new_state->current_line = NULL;
-    new_state->command = NULL;
-    new_state->fatal_error = false;
-    new_state->max_line_length = 0;
-    new_state->current_line_length = 0;
-
-    // compile regular expressions
+    // Setting redirect REGEX.
     int ret_code = regcomp(&new_state->in_redirect_regex, "[ \t\f\v]<.*", REG_EXTENDED);
     if (ret_code != 0) {
         // handle regular expression compilation error
@@ -56,9 +46,8 @@ int init_state(const struct dc_env *env, struct dc_error *err, struct state* new
         regfree(&new_state->out_redirect_regex);
         free(new_state);
         return NULL;
+
     }
-
-
 
     // get the PATH environment variable
     char* path_env = getenv("PATH");
@@ -84,8 +73,6 @@ int init_state(const struct dc_env *env, struct dc_error *err, struct state* new
         new_state->prompt = strdup(" $ ");
     }
 
-
-
     return READ_COMMANDS;
 };
 int read_commands(const struct dc_env *env, struct dc_error *err, struct state *currentState) {
@@ -100,9 +87,17 @@ int read_commands(const struct dc_env *env, struct dc_error *err, struct state *
 
     // display working directory to the user with the assigned prompt.
 
-    // Get the current working directory.
-    printf("[%s] $ ",workingDir, currentState->prompt);
-    scanf("%s", commandInput);
+    // Get the current working directory and display to user.
+    fprintf(stdout,"[%s] $ ",workingDir, currentState->prompt);
+    //scanf("%s", commandInput);
+
+    // take input from user.
+    currentState->current_line = malloc(sizeof (char));
+    if(checkError(err, currentState,"Could not take user input.")) {
+        return ERROR;
+    }
+
+
     return SEPARATE_COMMANDS;
 };
 int reset_state(const struct dc_env *env, struct dc_error *err, void *arg){
@@ -137,9 +132,10 @@ int destroy_state(const struct dc_env *env, struct dc_error *err, void *arg) {
 }
 
 // check if there is an error or not.
-bool checkError(struct dc_error* err, struct state* currentState) {
+bool checkError(struct dc_error* err, struct state* currentState,const char* errorMessage) {
     if (err != NULL && dc_error_has_error(err)) {
         currentState->fatal_error = true;
+        perror(errorMessage);
         return true;
     } else
         return false;
