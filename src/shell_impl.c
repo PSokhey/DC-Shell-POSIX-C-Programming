@@ -180,39 +180,40 @@ int handle_error(const struct dc_env *env, struct dc_error *err, struct state* c
     return RESET_STATE;
 }
 
+// Displaying the appropriate error essage.
 int handle_run_error(const struct dc_env *env, struct dc_error *err, struct state* currentState) {
 
     char* test = "worked";
 
     if (dc_error_is_errno(err, E2BIG)) {
-        fprintf(stdout, "Argument list too long\n");
+        fprintf(stdout, "Argument list too long (POSIX.1-2001)\n");
         return 1;
     } else if (dc_error_is_errno(err, EACCES)) {
-        fprintf(stdout, "Permission denied\n");
+        fprintf(stdout, "Permission denied (POSIX.1-2001)\n");
         return 2;
     } else if (dc_error_is_errno(err, EINVAL)) {
-        fprintf(stdout, "Invalid argument\n");
+        fprintf(stdout, "Invalid argument (POSIX.1-2001)\n");
         return 3;
     } else if (dc_error_is_errno(err, ELOOP)) {
-        fprintf(stdout, "[%s] Too many symbolic links encountered\n");
+        fprintf(stdout, "Too many levels of symbolic links (POSIX.1-2001)\n");
         return 4;
     } else if (dc_error_is_errno(err, ENAMETOOLONG)) {
-        fprintf(stdout, "[%s] File name too long\n");
+        fprintf(stdout, "Filename too long (POSIX.1-2001)\n");
         return 5;
     } else if (dc_error_is_errno(err, ENOENT)) {
-        fprintf(stdout, "No such file or directory\n");
+        fprintf(stdout, "No such file or directory (POSIX.1-2001)\n");
         return 127;
     } else if (dc_error_is_errno(err, ENOTDIR)) {
-        fprintf(stdout, "[%s] Not a directory\n");
+        fprintf(stdout, "Not a directory (POSIX.1-2001)\n");
         return 6;
     } else if (dc_error_is_errno(err, ENOEXEC)) {
-        fprintf(stdout, "[%s] Exec format error\n");
+        fprintf(stdout, "Exec format error (POSIX.1-2001)\n");
         return 7;
     } else if (dc_error_is_errno(err, ENOMEM)) {
-        fprintf(stdout, "[%s] Out of memory\n");
+        fprintf(stdout, "Not enough space/cannot allocate memory (POSIX.1-2001)\n");
         return 8;
     } else if (dc_error_is_errno(err, ETXTBSY)) {
-        fprintf(stdout, "[%s] Text file busy\n");
+        fprintf(stdout, "Text file busy (POSIX.1-2001)\n");
         return 9;
     } else {
         return 125;
