@@ -1,21 +1,25 @@
+#ifndef DC_SHELL_SHELL_H
+#define DC_SHELL_SHELL_H
 
-
-#ifndef OPEN_SHELL_H
-#define OPEN_SHELL_H
-
-#include <stdio.h>
-#include <state.h>
-#include <shell_impl.h>
-#include <dc_fsm/fsm.h>
-#include <dc_posix/dc_time.h>
-#include <ctype.h>
-#include <string.h>
+#include <dc_env/env.h>
 #include <dc_error/error.h>
+#include <dc_fsm/fsm.h>
+#include "command.h"
+enum shell_states
+{
+    INIT_STATE = DC_FSM_USER_START,
+    READ_COMMANDS,
+    ERROR,
+    RESET_STATE,
+    SEPARATE_COMMANDS,
+    PARSE_COMMANDS,
+    EXECUTE_COMMANDS,
+    EXIT,
+    DESTROY_STATE,
+};
 
+int run_shell(struct dc_env *env, struct dc_error *err);
 
-// runs the changing of the shell state.
-void run_shell();
+int run(const struct dc_env *env, struct dc_error *err, struct command *command, char **path);
 
-static struct state* create_state();
-
-#endif //OPEN_SHELL_H
+#endif //DC_SHELL_SHELL_H

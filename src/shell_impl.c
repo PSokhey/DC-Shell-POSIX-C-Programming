@@ -1,185 +1,232 @@
-#include <shell_impl.h>
+#include <dc_error/error.h>
+#include <dc_env/env.h>
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+#include "state.h"
+#include "command.h"
+#include "builtins.h"
+#include "shell.h"
+#include "execute.h"
+#include "util.h"
+#include "shell_impl.h"
+#include <dc_fsm/fsm.h>
+#include <dc_posix/dc_stdio.h>
+#include <dc_util/strings.h>
+#include <dc_util/filesystem.h>
 
+typedef struct command command;
+regex_t err_regex;
+regex_t in_regex;
+regex_t out_regex;
 
+int init_state(const struct dc_env *env, struct dc_error *err, void *arg) {
 
+    struct state *state = (struct state *) arg;
+    memset(state, 0, sizeof(struct state));
+    state->fatal_error = false;
+    state->max_line_length = sysconf(_SC_ARG_MAX);
 
-// example function of functions being used, to be moved later.
-// currently are empty and just placeholders.
-//CLEAR
-int init_state(const struct dc_env *env, struct dc_error *err, struct state* new_state){
+    regcomp(&in_regex, "[ \t\f\v]<.*", REG_EXTENDED);
+    regcomp(&out_regex, "[ \t\f\v][1^2]?>[>]?.*", REG_EXTENDED);
+    regcomp(&err_regex, "[ \t\f\v]2>[>]?.*", REG_EXTENDED);
 
-    // initial error handling
-    if (checkError(err, new_state,"Error before initializing state")) {
-        return ERROR;
+    state->in_redirect_regex = &in_regex;
+    state->out_redirect_regex = &out_regex;
+    state->err_redirect_regex = &err_regex;
+    state->path = get_path(env, err, state);
+    get_prompt(env, err, state);
+    state->command = (struct command *) malloc(sizeof(struct command));
+    state->command->line = NULL;
+
+    if (err != NULL && dc_error_has_error(err)) {
+        state->fatal_error = true;
+        printf("DC HAS ERROR IN MAIN IF STATEMENT");
+        return EXIT_FAILURE;
     }
-
-    // set state.max_line_length to _SC_ARG_MAX via sysconf()
-    regcomp(&new_state->in_redirect_regex , "[ \t\f\v]<.*", REG_EXTENDED);
-    regcomp(&new_state->out_redirect_regex , "[ \t\f\v][1^2]?>[>]?.*", REG_EXTENDED);
-    regcomp(&new_state->err_redirect_regex , "[ \t\f\v]2>[>]?.*", REG_EXTENDED);
-
-
-    // get the PATH environment variable
-    char* path_env = getenv("PATH");
-    if (path_env != NULL) {
-        // split PATH into an array, separate by :
-        printf("%s\n",path_env);
-        new_state->paths = split_string(path_env,  ':'); // NEED TO IMPLIMINT
-
-
-        //for testing path variable
-        //printf("%s",new_state->paths[0]);
-        //printf("%s",new_state->paths[1]);
-
-    }
-
-    // get the PS1 environment variable
-    char* ps1_env = getenv("PS1");
-    if (ps1_env != NULL) {
-        // set state.prompt to the PS1 value
-        new_state->prompt = strdup(ps1_env);
-    } else {
-        // set state.prompt to " $ "
-        new_state->prompt = strdup(" $ ");
-    }
-
     return READ_COMMANDS;
-};
-int read_commands(const struct dc_env *env, struct dc_error *err, struct state *currentState) {
-    size_t cmdLineLength = 0;
-    char *workingDir;
+}
 
-    workingDir = dc_get_working_dir(env, err);
-    if(checkError(err, currentState, "Could not get working directory")) {
+
+int read_commands(const struct dc_env *env, struct dc_error *err, void *arg) {
+    struct state *state = (struct state *) arg;
+    state->fatal_error = 0;
+    size_t line_len = 0;
+
+    char *cur_dir = dc_get_working_dir(env, err);
+    if (dc_error_has_error(err)) {
+        state->fatal_error = true;
         return ERROR;
     }
 
-    // Get the current working directory and display to user.
-    fprintf(stdout,"[%s] $ ",workingDir, currentState->prompt);
-    //scanf("%s", commandInput);
+    //p: this is dislplaying directory to user.
+    fprintf(stdout, "[%s] %s", cur_dir, state->prompt);
 
-    // allocating memory for taking input.
-    currentState->current_line = malloc(sizeof (char));
-    if(checkError(err, currentState,"Could not allocate memory.")) {
+    state->current_line = malloc(sizeof(char));
+    if (dc_error_has_error(err)) {
+        state->fatal_error = true;
+    }
+
+    dc_getline(env, err, &state->current_line, &line_len, stdin);
+    if (dc_error_has_error(err)) {
+        state->fatal_error = true;
         return ERROR;
     }
 
-    // taking the input.
-    dc_getline(env, err, &currentState->current_line, &cmdLineLength, stdin);
-    if(checkError(err, currentState, "Could not get command input.")) {
-        return ERROR;
-    }
+    dc_str_trim(env, state->current_line);
+    printf("Command: %s\n", state->current_line);
+    line_len = strlen(state->current_line);
 
-    dc_str_trim(env, currentState->current_line);
-    printf("Command: %s\n", currentState->current_line);
-    cmdLineLength = strlen(currentState->current_line);
-    if(cmdLineLength == 0) {
+    if (line_len == 0) {
         return RESET_STATE;
     }
 
-    // When the user actually ends a command.
-    currentState->current_line_length = cmdLineLength;
+    state->current_line_length = line_len;
+
     return SEPARATE_COMMANDS;
-};
+}
 
-int separate_commands(const struct dc_env *env, struct dc_error *err, struct state *currentState){
-    printf("Seperating commands...\n");
+int separate_commands(const struct dc_env *env, struct dc_error *err, void *arg) {
 
-    if(checkError(err, currentState, "Could not read command")) {
+    struct state *state = arg;
+
+    if (dc_error_has_error(err)) {
+        state->fatal_error = true;
         return ERROR;
     }
 
-    // making a new command object
-    currentState->command = createCommand();
-    if (currentState->command == NULL) {
+    state->command = calloc(1, sizeof(command));
+
+    if (state->command == NULL) {
         return ERROR;
     }
 
-    // passing the command from the state to the command struct.
-    currentState->command->line = strdup(currentState->current_line);
+    state->command->line = strdup(state->current_line);
 
-    // If an error with the line be passed.
-    if (currentState->command->line == NULL) {
-        free(currentState->command);
+    if (state->command->line == NULL) {
+        free(state->command);
         return ERROR;
     }
+
+    state->command->command = NULL;
+    state->command->exit_code = 0;
+    state->command->argv = NULL;
+    state->command->argc = 0;
+    state->command->stdin_file = NULL;
+    state->command->stdout_file = NULL;
+    state->command->stdout_overwrite = false;
+    state->command->stderr_file = NULL;
 
     return PARSE_COMMANDS;
-};
-int parse_commands(const struct dc_env *env, struct dc_error *err, struct state* currentState){
-    printf("Parsing commands...\n");
+}
 
-    // call function to parse the command.
-    parse_command(env, err, currentState);
-
-    // error check the parse.
-    if(checkError(err, currentState, "Could not parse command")) {
+int parse_commands(const struct dc_env *env, struct dc_error *err, void *arg) {
+    struct state *state = arg;
+    state->fatal_error = 0;
+    parse_command(env, err, state);
+    if (dc_error_has_error(err)) {
+        state->fatal_error = 1;
         return ERROR;
     }
-
     return EXECUTE_COMMANDS;
-};
-int execute_commands(const struct dc_env *env, struct dc_error *err, void *arg){
-    printf("Executing commands...\n");
+}
+
+int execute_commands(const struct dc_env *env,
+                     struct dc_error *err, void *arg) {
+
+    struct state *state = (struct state *) arg;
+
+    if (strcmp(state->command->command, "cd") == 0) {
+        builtin_cd(env, err, state);
+    } else if(strcmp(state->command->command, "cd .") == 0){
+        builtin_cd(env, err, state);
+    } else if(strcmp(state->command->command, "cd /") == 0){
+        builtin_cd(env, err, state);
+    } else if(strcmp(state->command->command, "cd ~") == 0){
+        builtin_cd(env, err, state);
+    } else if(strcmp(state->command->command, "cd ..") == 0){
+        builtin_cd(env, err, state);
+    }
+    else if (strcmp(state->command->command, "exit") == 0) {
+        return EXIT;
+    } else {
+        execute(env, err, state, state->path);
+        if (dc_error_has_error(err)) {
+            state->fatal_error = true;
+        }
+    }
+    printf("\nExit code: %d\n", state->command->exit_code);
+    if (state->fatal_error) {
+        return ERROR;
+    }
     return RESET_STATE;
-};
-int reset_state(const struct dc_env *env, struct dc_error *err, void *arg){
-    printf("Resetting state..\n");
-    return READ_COMMANDS;
-};
-
-int do_exit(const struct dc_env *env, struct dc_error *err, void *arg){
-    printf("Exiting program...");
+}
+int do_exit(const struct dc_env *env, struct dc_error *err, void *arg) {
+    struct state *state = arg;
+    do_reset_state(env, err, state);
     return DESTROY_STATE;
-};
-int handler_error(const struct dc_env *env, struct dc_error *err, void *arg){
-    printf("Handling error...\n");
+}
 
-    // temporary to keep fsm going and needs to be properly handled.
+int reset_state(const struct dc_env *env, struct dc_error *error, void *arg) {
+    struct state *state = arg;
+    do_reset_state(env, error, state);
     return READ_COMMANDS;
-};
+}
+
+int handle_error(const struct dc_env *env, struct dc_error *err, void *arg) {
+    struct state *state = arg;
+
+    if (state->current_line == NULL) {
+        printf("Internal error (%d)\n", state->command->exit_code);
+    } else {
+        printf("Internal error (%d) %s: %s\n",
+               state->command->exit_code, state->command->command, state->current_line);
+    }
+    if (state->fatal_error) {
+        return DESTROY_STATE;
+    }
+    return RESET_STATE;
+}
+
+int handle_run_error(const struct dc_env *env, struct dc_error *err, void *arg) {
+    struct state *state = (struct state *) arg;
+    if (dc_error_is_errno(err, E2BIG)) {
+        fprintf(stdout, "[%s] Argument list too long\n", state->command->command);
+        return 1;
+    } else if (dc_error_is_errno(err, EACCES)) {
+        fprintf(stdout, "[%s] Permission denied\n", state->command->command);
+        return 2;
+    } else if (dc_error_is_errno(err, EINVAL)) {
+        fprintf(stdout, "[%s] Invalid argument\n", "state->command->command");
+        return 3;
+    } else if (dc_error_is_errno(err, ELOOP)) {
+        fprintf(stdout, "[%s] Too many symbolic links encountered\n", state->command->command);
+        return 4;
+    } else if (dc_error_is_errno(err, ENAMETOOLONG)) {
+        fprintf(stdout, "[%s] File name too long\n", state->command->command);
+        return 5;
+    } else if (dc_error_is_errno(err, ENOENT)) {
+        fprintf(stdout, "[%s] No such file or directory\n", state->command->command);
+        return 127;
+    } else if (dc_error_is_errno(err, ENOTDIR)) {
+        fprintf(stdout, "[%s] Not a directory\n", state->command->command);
+        return 6;
+    } else if (dc_error_is_errno(err, ENOEXEC)) {
+        fprintf(stdout, "[%s] Exec format error\n", state->command->command);
+        return 7;
+    } else if (dc_error_is_errno(err, ENOMEM)) {
+        fprintf(stdout, "[%s] Out of memory\n", state->command->command);
+        return 8;
+    } else if (dc_error_is_errno(err, ETXTBSY)) {
+        fprintf(stdout, "[%s] Text file busy\n", state->command->command);
+        return 9;
+    } else {
+        return 125;
+    }
+}
+
 int destroy_state(const struct dc_env *env, struct dc_error *err, void *arg) {
-    printf("Destroying state...\n");
+    struct state *state = arg;
+    reset_state(env, err, state);
     return DC_FSM_EXIT;
-}
-
-// check if there is an error or not.
-bool checkError(struct dc_error* err, struct state* currentState,const char* errorMessage) {
-    if (err != NULL && dc_error_has_error(err)) {
-        currentState->fatal_error = true;
-        perror(errorMessage);
-        return true;
-    } else
-        return false;
-}
-
-static struct command* createCommand(){
-
-    // allocate new memory for the struct.
-    struct command* newCommand = calloc(1,sizeof(struct command));
-
-    // initial setup for the command struct.
-    newCommand->command = NULL;
-    newCommand->argc = 0;
-    newCommand->argv = NULL;
-    newCommand->exit_code = 0;
-    newCommand->line = NULL;
-    newCommand->std_overwrite = false;
-    newCommand->stderr_overwrite = false;
-    newCommand->stdin_file = NULL;
-    newCommand->stdout_file = NULL;
-
-    // Set the stdin_file field to redirect input from a file
-    //newCommand->stdin_file = open("input.txt", O_RDONLY);
-
-    // Set the stdout_file field to redirect output to a file
-    //newCommand->stdout_file = open("output.txt", O_WRONLY | O_CREAT | O_TRUNC);
-
-    return newCommand;
-}
-
-int parse_command(const struct dc_env *env, struct dc_error *err, struct state *currentState) {
-    printf("parse  command was called by parse commands");
-
-    return EXECUTE_COMMANDS;
 }

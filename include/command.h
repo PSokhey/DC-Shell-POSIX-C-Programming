@@ -1,26 +1,33 @@
+#ifndef DC_SHELL_COMMAND_H
+#define DC_SHELL_COMMAND_H
 
-
-#ifndef OPEN_COMMAND_H
-#define OPEN_COMMAND_H
-
-#include <stdbool.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <dc_error/error.h>
+#include <dc_env/env.h>
+#include <dc_posix/dc_wordexp.h>
+#include <string.h>
+#include <stdio.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include "state.h"
 
-// Pointers might change to char*.
 struct command {
-    char *line; // The command line for this command
-    char* command; // The command (e.g. ls, exit, cd, cat)
-    size_t argc; // The number of arguments passed to the command
-    char** argv; // The arguments passed to the command
-    char* stdin_file; // The file to redirect stdin from, or NULL
-    char* stdout_file; // The file to redirect stdout to, or NULL
-    char* stderror_file;
-    bool std_overwrite; // Append to or truncate the stdout file
-    bool stderr_overwrite; // Append to or truncate the stderr file
-    int exit_code; // The status returned from the command
+    char *line;
+    char *command;
+    size_t argc;
+    char **argv;
+    char *stdin_file;
+    char *stdout_file;
+    bool stdout_overwrite;
+    char *stderr_file;
+    bool stderr_overwrite;
+    int exit_code;
 };
 
+int parse_command(const struct dc_env *env, struct dc_error *err,
+                  struct state *state);
 
+void redirect(const struct dc_env *env, struct dc_error *err, void *arg);
 
-#endif //OPEN_COMMAND_H
+#endif //DC_SHELL_COMMAND_H
