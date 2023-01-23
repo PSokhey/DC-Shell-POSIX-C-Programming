@@ -1,4 +1,7 @@
 #include <shell_impl.h>
+#include <dc_posix/dc_stdio.h>
+#include <dc_util/strings.h>
+#include <dc_util/filesystem.h>
 #include <string.h>
 #include <util.h>
 
@@ -9,13 +12,6 @@
 // currently are empty and just placeholders.
 //CLEAR
 int init_state(const struct dc_env *env, struct dc_error *err, struct state* new_state){
-
-/*    // Allocate memory for struct.
-    struct state* new_state = malloc(sizeof(struct state));
-    if (!new_state) {
-        // handle allocation error
-        return NULL;
-    }*/
 
     // initial error handling
     if (checkError(err, new_state,"Error before initializing state")) {
@@ -76,28 +72,39 @@ int init_state(const struct dc_env *env, struct dc_error *err, struct state* new
     return READ_COMMANDS;
 };
 int read_commands(const struct dc_env *env, struct dc_error *err, struct state *currentState) {
-    char commandInput[100] ;
-    char workingDir[MAX_WORKING_DIR_LENGTH];
+    size_t cmdLineLength = 0;
+    char *workingDir;
 
-
-    if(getcwd(workingDir, sizeof (workingDir)) == NULL) {
-        currentState->fatal_error = true;
+    workingDir = dc_get_working_dir(env, err);
+    if(checkError(err, currentState, "Could not get working directory")) {
         return ERROR;
     }
-
-    // display working directory to the user with the assigned prompt.
 
     // Get the current working directory and display to user.
     fprintf(stdout,"[%s] $ ",workingDir, currentState->prompt);
     //scanf("%s", commandInput);
 
-    // take input from user.
+    // allocating memory for taking input.
     currentState->current_line = malloc(sizeof (char));
-    if(checkError(err, currentState,"Could not take user input.")) {
+    if(checkError(err, currentState,"Could not allocate memory.")) {
         return ERROR;
     }
 
+    // taking the input.
+    dc_getline(env, err, &currentState->current_line, &cmdLineLength, stdin);
+    if(checkError(err, currentState, "Could not get command input.")) {
+        return ERROR;
+    }
 
+    dc_str_trim(env, currentState->current_line);
+    printf("Command: %s\n", currentState->current_line);
+    cmdLineLength = strlen(currentState->current_line);
+    if(cmdLineLength == 0) {
+        return RESET_STATE;
+    }
+
+    // When the user actually ends a command.
+    currentState->current_line_length = cmdLineLength;
     return SEPARATE_COMMANDS;
 };
 int reset_state(const struct dc_env *env, struct dc_error *err, void *arg){

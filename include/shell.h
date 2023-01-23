@@ -16,4 +16,6 @@
 // runs the changing of the shell state.
 void run_shell();
 
+static struct state* create_state();
+
 #endif //OPEN_SHELL_H

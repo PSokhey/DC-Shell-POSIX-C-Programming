@@ -42,49 +42,7 @@ struct state {
 
 };
 
-static struct state* create_state() {
 
-    // Allocate memory for struct.
-    struct state* new_state = malloc(sizeof(struct state));
-    if (!new_state) {
-        // handle allocation error
-        return NULL;
-    }
-
-    // initialize all variables
-    new_state->paths = NULL;
-    new_state->prompt = NULL;
-    new_state->current_line = NULL;
-    new_state->command = NULL;
-    new_state->fatal_error = false;
-    new_state->max_line_length = 0;
-    new_state->current_line_length = 0;
-
-    // compile regular expressions
-    int ret_code = regcomp(&new_state->in_redirect_regex, "[ \t\f\v]<.*", REG_EXTENDED);
-    if (ret_code != 0) {
-        // handle regular expression compilation error
-        free(new_state);
-        return NULL;
-    }
-    ret_code = regcomp(&new_state->out_redirect_regex, "[ \t\f\v][1^2]?>[>]?.*", REG_EXTENDED);
-    if (ret_code != 0) {
-        // handle regular expression compilation error
-        regfree(&new_state->in_redirect_regex);
-        free(new_state);
-        return NULL;
-    }
-    ret_code = regcomp(&new_state->err_redirect_regex, "[ \t\f\v]2>[>]?.*", REG_EXTENDED);
-    if (ret_code != 0) {
-        // handle regular expression compilation error
-        regfree(&new_state->in_redirect_regex);
-        regfree(&new_state->out_redirect_regex);
-        free(new_state);
-        return NULL;
-    }
-
-    return new_state;
-}
 
 
 
