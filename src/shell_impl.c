@@ -88,27 +88,27 @@ int read_commands(const struct dc_env *env, struct dc_error *err, struct state* 
     return SEPARATE_COMMANDS;
 }
 
+// Seperate commands  and store store in state object.
 int separate_commands(const struct dc_env *env, struct dc_error *err, struct state* currentState) {
 
-    if (dc_error_has_error(err)) {
-        currentState->fatal_error = true;
+    if (hasErrorOccured(err, currentState,"Unable to read command.")) {
         return ERROR;
     }
 
+    // creating new command object, if error go to ERROR state.
     currentState->command = calloc(1, sizeof(struct command));
-
-
     if (currentState->command == NULL) {
         return ERROR;
     }
 
+    // Move line input to command object, if error then got to ERROR state.
     currentState->command->line = strdup(currentState->current_line);
-
     if (currentState->command->line == NULL) {
         free(currentState->command);
         return ERROR;
     }
 
+    // No error, set all fields.
     currentState->command->command = NULL;
     currentState->command->exit_code = 0;
     currentState->command->argv = NULL;
