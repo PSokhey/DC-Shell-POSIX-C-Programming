@@ -45,8 +45,6 @@ int parse_command(const struct dc_env *env, struct dc_error *err,
         currentState->command->line[REGEXMatch.rm_so] = '\0';
     }
 
-    ///////////////////////
-
 
     int err_redirect_result = regexec(currentState->err_redirect_regex,
                                       currentState->command->line, 1,
@@ -73,10 +71,6 @@ int parse_command(const struct dc_env *env, struct dc_error *err,
         free(redirect);
         currentState->command->line[REGEXMatch.rm_so] = '\0';
     }
-
-
-
-    /////////////////////////////
 
     if (regexec(currentState->in_redirect_regex, currentState->command->line, 1, &REGEXMatch, 0) == 0) {
         size_t redirect_len = REGEXMatch.rm_eo - REGEXMatch.rm_so;
