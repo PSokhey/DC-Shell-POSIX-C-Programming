@@ -22,10 +22,20 @@ enum FSMState
     DESTROY_STATE,
 };
 
-// Called to run the shell.
+/**
+ * Run main shell program.
+ * @return status value.
+ */
 int shell();
 
-// for running a command.
+/**
+ * For when running a command.
+ * @param env pointer to environment object.
+ * @param err pointer to error object.
+ * @param command pointer to command object.
+ * @param path array for the path variable directory.
+ * @return only returns on an error.
+ */
 int run(const struct dc_env *env, struct dc_error *err, struct command *command, char **path);
 
 #endif //DC_SHELL_SHELL_H

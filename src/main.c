@@ -1,7 +1,3 @@
-#include <dc_env/env.h>
-#include <dc_error/error.h>
-#include <stddef.h>
-#include <stdlib.h>
 #include "shell.h"
 
 // Drive program the program.

@@ -4,6 +4,7 @@
 #include "util.h"
 #include <dc_posix/dc_unistd.h>
 
+// To parse in a command to be excecuted.
 int parse_command(const struct dc_env *env, struct dc_error *err,
                   struct state *currentState) {
 
@@ -115,6 +116,7 @@ int parse_command(const struct dc_env *env, struct dc_error *err,
 
 }
 
+// Redirecting file input and output.
 void redirect(const struct dc_env *env, struct dc_error *err, struct state* currentState) {
 
     int fd;

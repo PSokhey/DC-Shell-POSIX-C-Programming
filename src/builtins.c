@@ -9,6 +9,7 @@
 // Changing directory with build in command.
 void builtin_cd(const struct dc_env *env, struct dc_error *err, struct state *currentState) {
 
+    // Pointer to the path.
     char *path;
     if (currentState->command->argv[1] == NULL) {
         dc_expand_path(env, err, &path, "~/");
@@ -29,6 +30,7 @@ void builtin_cd(const struct dc_env *env, struct dc_error *err, struct state *cu
         path = strdup(currentState->command->argv[1]);
     }
 
+    // Print the correct error if an error occurs.
     if (dc_error_has_error(err)) {
         if (dc_error_is_errno(err, EACCES)) {
             fprintf(stdout, "%s: Permission denied\n", path);
