@@ -17,15 +17,12 @@
 #include <dc_util/filesystem.h>
 
 //typedef struct command command;
-//regex_t err_regex;
-//regex_t in_regex;
-//regex_t out_regex;
+regex_t err_regex;
+regex_t in_regex;
+regex_t out_regex;
 
 // Initiating the current state.
 int init_state(const struct dc_env *env, struct dc_error *err, struct state* currentState) {
-    regex_t err_regex;
-    regex_t in_regex;
-    regex_t out_regex;
 
     currentState->max_line_length = sysconf(_SC_ARG_MAX);
     int regcomp_result_in = regcomp(&in_regex, "[ \t\f\v]<.*", REG_EXTENDED);
@@ -87,7 +84,6 @@ int read_commands(const struct dc_env *env, struct dc_error *err, struct state* 
     }
 
     currentState->current_line_length = inputLineLength;
-
     return SEPARATE_COMMANDS;
 }
 
