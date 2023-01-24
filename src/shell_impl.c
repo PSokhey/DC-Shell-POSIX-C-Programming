@@ -156,18 +156,20 @@ int execute_commands(const struct dc_env *env,
     return RESET_STATE;
 }
 
+// Exit the shell.
 int do_exit(const struct dc_env *env, struct dc_error *err, struct state* currentState) {
-    //do_reset_state(env, err, currentState);
+    do_reset_state(env, err, currentState);
     return DESTROY_STATE;
 }
 
+// to reset for next command.
 int reset_state(const struct dc_env *env, struct dc_error *error, struct state* currentState) {
     do_reset_state(env, error, currentState);
     return READ_COMMANDS;
 }
 
+//handle an error.
 int handle_error(const struct dc_env *env, struct dc_error *err, struct state* currentState) {
-
     if (currentState->current_line == NULL) {
         printf("Internal error (%d)\n", currentState->command->exit_code);
     } else {
@@ -182,8 +184,6 @@ int handle_error(const struct dc_env *env, struct dc_error *err, struct state* c
 
 // Displaying the appropriate error essage.
 int handle_run_error(const struct dc_env *env, struct dc_error *err, struct state* currentState) {
-
-    char* test = "worked";
 
     if (dc_error_is_errno(err, E2BIG)) {
         fprintf(stdout, "Argument list too long (POSIX.1-2001)\n");
@@ -220,6 +220,7 @@ int handle_run_error(const struct dc_env *env, struct dc_error *err, struct stat
     }
 }
 
+// for repeated errro check helper function.
 bool hasErrorOccured(struct dc_error* err, struct state* currentState, char* errorMessage) {
     if (err != NULL && dc_error_has_error(err)) {
         currentState->fatal_error = true;

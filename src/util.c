@@ -40,7 +40,7 @@ char *get_prompt(const struct dc_env *env, struct dc_error *err, void *arg){
     return ps1_env;
 }
 
-char **parse_path(const struct dc_env *env, struct dc_error *err, char *path_str){
+/*char **parse_path(const struct dc_env *env, struct dc_error *err, char *path_str){
     char **path = NULL;
     int path_len = 0;
     char *token = strtok(path_str, "/");
@@ -58,15 +58,57 @@ char **parse_path(const struct dc_env *env, struct dc_error *err, char *path_str
     path[path_len] = 0;
 
     return path;
+}*/
+
+char *strCat(const char *str1, const char *str2) {
+    char *target;
+    size_t str1_length, str2_length;
+
+    // Check that str1 and str2 are not null
+    if (!str1 || !str2) {
+        return NULL;
+    }
+
+    // Get the lengths of str1 and str2
+    str1_length = strlen(str1);
+    str2_length = strlen(str2);
+
+    // Allocate memory for the concatenated string
+    target = malloc(str1_length + str2_length + 1);
+
+    // Check that memory allocation was successful
+    if (!target) {
+        return NULL;
+    }
+
+    // Copy the contents of str1 and str2 into target
+    memcpy(target, str1, str1_length);
+    memcpy(target + str1_length, str2, str2_length);
+
+    // Null-terminate the concatenated string
+    target[str1_length + str2_length] = '\0';
+
+    return target;
 }
 
 void do_reset_state(const struct dc_env *env,
-                    struct dc_error *err, struct state *currnetState) {
+                    struct dc_error *err, struct state *currentState) {
 
     // reset the state properties.
-    free(currnetState->current_line);
-    currnetState->current_line = NULL;
-    memset(err, 0, sizeof(currnetState));
+    free(currentState->current_line);
+    free(currentState->command->command);
+    free(currentState->command->stdin_file);
+    free(currentState->command->stdout_file);
+    free(currentState->command->stderr_file);
+    for (size_t i = 0; i < currentState->command->argc; ++i) {
+        free(currentState->command->argv[i]);
+    }
+    free(currentState->command->argv);
+    free(currentState->command);
+
+
+    currentState->current_line = NULL;
+    memset(err, 0, sizeof(currentState));
 }
 
 char *expand_path(const struct dc_env *env, struct dc_error *err, char *file){
@@ -105,36 +147,7 @@ char *expand_path(const struct dc_env *env, struct dc_error *err, char *file){
     }
 }
 
-char *strCat(const char *str1, const char *str2) {
-    char *target;
-    size_t str1_length, str2_length;
 
-    // Check that str1 and str2 are not null
-    if (!str1 || !str2) {
-        return NULL;
-    }
-
-    // Get the lengths of str1 and str2
-    str1_length = strlen(str1);
-    str2_length = strlen(str2);
-
-    // Allocate memory for the concatenated string
-    target = malloc(str1_length + str2_length + 1);
-
-    // Check that memory allocation was successful
-    if (!target) {
-        return NULL;
-    }
-
-    // Copy the contents of str1 and str2 into target
-    memcpy(target, str1, str1_length);
-    memcpy(target + str1_length, str2, str2_length);
-
-    // Null-terminate the concatenated string
-    target[str1_length + str2_length] = '\0';
-
-    return target;
-}
 
 
 
