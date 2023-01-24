@@ -39,8 +39,8 @@ int shell() {
     struct dc_error *err; // environment of the program.
 
     // setting to trace the program.
-    tracer = dc_env_default_tracer;
-    //tracer = NULL;
+    //tracer = dc_env_default_tracer;
+    tracer = NULL;
 
     // initiating the error, environment, and tracing variables.
     err = dc_error_create(false);
