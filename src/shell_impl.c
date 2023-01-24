@@ -51,23 +51,24 @@ int init_state(const struct dc_env *env, struct dc_error *err, struct state* cur
 
 // read input from user.
 int read_commands(const struct dc_env *env, struct dc_error *err, struct state* currentState) {
-    currentState->fatal_error = 0;
     size_t inputLineLength = 0;
     char *workingDir = dc_get_working_dir(env, err);
+    currentState->fatal_error = 0;
 
 
+    // Check if any error occurred.
     if (hasErrorOccured(err, currentState, "Unable to get current working directory.")) {
         return ERROR;
     }
 
     // Print the current directory for the user.
     fprintf(stdout, "[%s] %s", workingDir, currentState->prompt);
-    currentState->current_line = malloc(sizeof(char));
     if (hasErrorOccured(err, currentState, "Could not take input.")) {
         return ERROR;
     }
 
     // Get the line input and check for error.
+    currentState->current_line = malloc(sizeof(char));
     dc_getline(env, err, &currentState->current_line, &inputLineLength, stdin);
     if (hasErrorOccured(err, currentState, "Unable to get line from user.")) {
         return ERROR;
