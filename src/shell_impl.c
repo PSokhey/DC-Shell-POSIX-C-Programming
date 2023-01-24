@@ -233,7 +233,37 @@ bool hasErrorOccured(struct dc_error* err, struct state* currentState, char* err
     }
 }
 
+// Free memory and exit Finite State Machine.
 int destroy_state(const struct dc_env *env, struct dc_error *err, struct state* currentState) {
-    //reset_state(env, err, currentState);
+
+    // Free from state struct.
+    regfree(currentState->in_redirect_regex);
+    regfree(currentState->out_redirect_regex);
+    regfree(currentState->err_redirect_regex);
+    free(currentState->in_redirect_regex);
+    free(currentState->out_redirect_regex);
+    free(currentState->err_redirect_regex);
+    for (int i = 0; currentState->path[i]; i++) {
+        free(currentState->path[i]);
+    }
+    free(currentState->path);
+    free(currentState->prompt);
+    free(currentState->current_line);
+    free(currentState->command->line);
+    for (int i = 0; i < currentState->command->argc; i++) {
+        free(currentState->command->argv[i]);
+    }
+
+    // free from command struct.
+    free(currentState->command->argv);
+    free(currentState->command->stdin_file);
+    free(currentState->command->stdout_file);
+    free(currentState->command->stderr_file);
+    free(currentState->command);
+    memset(currentState, 0, sizeof(struct state));
+
+    free(err);
+    free(env);
+
     return DC_FSM_EXIT;
 }
