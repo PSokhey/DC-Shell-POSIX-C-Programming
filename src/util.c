@@ -8,7 +8,7 @@
 #include "util.h"
 
 // Get the array for the path variable.
-char **get_path()
+char **getPath()
 {
     char *pathEnv = getenv("PATH");
     const char * delimiter = ":";
@@ -34,7 +34,7 @@ char **get_path()
 }
 
 // Get the prompt for the command line input.
-char *get_prompt(const struct dc_env *env, struct dc_error* err, struct state* currentState){
+char *getPrompt(const struct dc_env *env, struct dc_error* err, struct state* currentState){
     char *ps1Env = getenv("PS1");
     if (ps1Env == NULL) {
         currentState->prompt = strdup("$ ");

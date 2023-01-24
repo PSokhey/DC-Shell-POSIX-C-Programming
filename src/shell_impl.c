@@ -37,8 +37,8 @@ int init_state(const struct dc_env *env, struct dc_error *err, struct state* cur
     currentState->in_redirect_regex = &in_regex;
     currentState->out_redirect_regex = &out_regex;
     currentState->err_redirect_regex = &err_regex;
-    currentState->path = get_path(env, err, currentState);
-    get_prompt(env, err, currentState);
+    currentState->path = getPath(env, err, currentState);
+    getPrompt(env, err, currentState);
     currentState->command = (struct command *) calloc(1,sizeof(struct command));
     currentState->command->line = NULL;
 

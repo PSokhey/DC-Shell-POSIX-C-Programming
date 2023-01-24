@@ -10,7 +10,7 @@
  * Get the path variable.
  * @return array for the path.
  */
-char **get_path();
+char **getPath();
 
 /**
  * get the prompt for the command line.
@@ -19,7 +19,7 @@ char **get_path();
  * @param currentState pointer to the state object.
  * @return the prompt string.
  */
-char *get_prompt(const struct dc_env *env, struct dc_error *err, struct state* currentState);
+char *getPrompt(const struct dc_env *env, struct dc_error *err, struct state* currentState);
 
 /**
  * expanded path for executing commands.
