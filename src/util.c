@@ -63,7 +63,7 @@ char **parse_path(const struct dc_env *env, struct dc_error *err, char *path_str
 void do_reset_state(const struct dc_env *env,
                     struct dc_error *err, struct state *currnetState) {
 
-    // reset the state properties. 
+    // reset the state properties.
     free(currnetState->current_line);
     currnetState->current_line = NULL;
     memset(err, 0, sizeof(currnetState));
@@ -105,22 +105,37 @@ char *expand_path(const struct dc_env *env, struct dc_error *err, char *file){
     }
 }
 
-char *my_strcat(const char *str1, const char *str2){
-    char *dest = NULL;
+char *strCat(const char *str1, const char *str2) {
+    char *target;
     size_t str1_length, str2_length;
 
-    if(str1 && str2)
-    {
-        dest = malloc((str1_length = strlen(str1)) + (str2_length = strlen(str2)) + 1);
-        if(dest)
-        {
-            memcpy(dest, str1, str1_length);
-            memcpy(dest + str1_length, str2, str2_length);
-        }
-        dest[(str1_length + str2_length)] = '\0';
+    // Check that str1 and str2 are not null
+    if (!str1 || !str2) {
+        return NULL;
     }
-    return dest;
+
+    // Get the lengths of str1 and str2
+    str1_length = strlen(str1);
+    str2_length = strlen(str2);
+
+    // Allocate memory for the concatenated string
+    target = malloc(str1_length + str2_length + 1);
+
+    // Check that memory allocation was successful
+    if (!target) {
+        return NULL;
+    }
+
+    // Copy the contents of str1 and str2 into target
+    memcpy(target, str1, str1_length);
+    memcpy(target + str1_length, str2, str2_length);
+
+    // Null-terminate the concatenated string
+    target[str1_length + str2_length] = '\0';
+
+    return target;
 }
+
 
 
 

@@ -18,6 +18,6 @@ void do_reset_state(const struct dc_env *env, struct dc_error *err, struct state
 
 void display_state(const struct dc_env *env, const struct state *state, FILE *stream);
 
-char *my_strcat(const char *str1, const char *str2);
+char *strCat(const char *str1, const char *str2);
 
 #endif //DC_SHELL_UTIL_H

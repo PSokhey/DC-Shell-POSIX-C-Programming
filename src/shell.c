@@ -63,28 +63,25 @@ int shell() {
     return ret_val;
 }
 
-
+// Executes the command.
 int run(const struct dc_env *env, struct dc_error *err, struct command *command, char **path) {
-
-    if (strstr(command->command, "/") != NULL) {
+    if (strchr(command->command, '/') != NULL) {
         command->argv[0] = command->command;
         dc_execve(env, err, command->command, command->argv, NULL);
     } else {
         if (path[0] == NULL) {
             DC_ERROR_RAISE_CHECK(err);
-            fprintf(stderr, "Error: %s\n", strerror(ENOENT));
-        } else {
-            for (char * new_com = *path; new_com; new_com = *path++) {
-                //printf("%s\n", new_com);
-                char * dest = my_strcat(new_com, "/");
-                dest = my_strcat(dest, command->command);
-                command->argv[0] = dest;
-                dc_execvp(env, err, dest, command->argv);
-                if (dc_error_has_error(err)){
-                    if (!dc_error_is_errno(err, ENOENT))
-                        break;
-                }
+            return -1;
+        }
+        for (char **new_com = path; *new_com; new_com++) {
+            char *cmd = strCat(*new_com, "/");
+            cmd = strCat(cmd, command->command);
+            command->argv[0] = cmd;
+            dc_execvp(env, err, cmd, command->argv);
+            if (!dc_error_is_errno(err, ENOENT)) {
+                break;
             }
         }
     }
 }
+
