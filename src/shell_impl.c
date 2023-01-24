@@ -16,7 +16,6 @@
 #include <dc_util/strings.h>
 #include <dc_util/filesystem.h>
 
-//typedef struct command command;
 regex_t err_regex;
 regex_t in_regex;
 regex_t out_regex;
@@ -122,7 +121,6 @@ int separate_commands(const struct dc_env *env, struct dc_error *err, struct sta
 }
 
 int parse_commands(const struct dc_env *env, struct dc_error *err, struct state* currentState) {
-    //currentState->fatal_error = 0;
 
     // parse the command.
     parse_command(env, err, currentState);
@@ -164,7 +162,9 @@ int do_exit(const struct dc_env *env, struct dc_error *err, struct state* curren
 
 // to reset for next command.
 int reset_state(const struct dc_env *env, struct dc_error *error, struct state* currentState) {
-    do_reset_state(env, error, currentState);
+
+    if(currentState->command->command != NULL)
+        do_reset_state(env, error, currentState);
     return READ_COMMANDS;
 }
 
