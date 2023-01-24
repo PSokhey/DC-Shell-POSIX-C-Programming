@@ -25,6 +25,7 @@ enum FSMState
 // Called to run the shell.
 int shell();
 
+// for running a command.
 int run(const struct dc_env *env, struct dc_error *err, struct command *command, char **path);
 
 #endif //DC_SHELL_SHELL_H

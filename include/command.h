@@ -24,10 +24,10 @@ struct command {
     bool stderr_overwrite;
     int exit_code;
 };
-
+void redirect(const struct dc_env *env, struct dc_error *err, struct state* currentState);
 int parse_command(const struct dc_env *env, struct dc_error *err,
                   struct state *currentState);
 
-void redirect(const struct dc_env *env, struct dc_error *err, struct state* currentState);
+
 
 #endif //DC_SHELL_COMMAND_H
