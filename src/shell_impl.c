@@ -122,10 +122,11 @@ int separate_commands(const struct dc_env *env, struct dc_error *err, struct sta
 }
 
 int parse_commands(const struct dc_env *env, struct dc_error *err, struct state* currentState) {
-    currentState->fatal_error = 0;
+    //currentState->fatal_error = 0;
+
+    // parse the command.
     parse_command(env, err, currentState);
-    if (dc_error_has_error(err)) {
-        currentState->fatal_error = 1;
+    if (hasErrorOccured(err, currentState, "Unable to parse command")) {
         return ERROR;
     }
     return EXECUTE_COMMANDS;

@@ -5,130 +5,136 @@
 #include <dc_posix/dc_unistd.h>
 
 int parse_command(const struct dc_env *env, struct dc_error *err,
-                  struct state *state) {
+                  struct state *currentState) {
 
-    if (dc_error_has_error(err)) {
-        state->fatal_error = true;
+    // Check for any error till this point.
+    if (hasErrorOccured(err, currentState, "Unable to parse command")) {
         return ERROR;
     }
-    // THE REGEX RETURNS 0 IF IT MATCHES AND 1 IF IT DOES NOT
-    regmatch_t match;
-    int regex_result_err, regex_result_out, regex_result_in, wordexp_result;
-    wordexp_t exp;
 
-    regex_result_err = regexec(state->err_redirect_regex,
-                               state->command->line, 1,
-                               &match, 0);
-    if (regex_result_err == 0) {
+    // for REGEX and word expandng.
+    int REGEXResultErr;
+    int REGXResultOut;
+    int REGEXResultIn;
+    regmatch_t REGEXMatch;
+    int wordExpResult;
+    wordexp_t wordExp;
 
-        size_t redirect_len = match.rm_eo - match.rm_so;
-        char *redirect = strndup(state->command->line + match.rm_so, redirect_len);
+
+
+    char *redirect;
+    size_t redirect_len;
+
+    if ((REGEXResultErr = regexec(currentState->err_redirect_regex, currentState->command->line, 1, &REGEXMatch, 0)) == REG_NOERROR) {
+        redirect_len = REGEXMatch.rm_eo - REGEXMatch.rm_so;
+        redirect = strndup(currentState->command->line + REGEXMatch.rm_so, redirect_len);
+        if (redirect == NULL) {
+            currentState->fatal_error = true;
+            return ERROR;
+        }
+        if (strchr(redirect, '>') != NULL && strchr(redirect, '>')[1] == '>') {
+            currentState->command->stderr_overwrite = true;
+        }
+        currentState->command->stderr_file = expand_path(env, err, redirect);
+        if (currentState->command->stderr_file == NULL) {
+            currentState->fatal_error = true;
+            free(redirect);
+            return ERROR;
+        }
+        free(redirect);
+        currentState->command->line[REGEXMatch.rm_so] = '\0';
+    }
+
+    ///////////////////////
+
+
+    int err_redirect_result = regexec(currentState->err_redirect_regex,
+                                      currentState->command->line, 1,
+                                      &REGEXMatch, 0);
+    if (err_redirect_result == 0) {
+        size_t redirect_len = REGEXMatch.rm_eo - REGEXMatch.rm_so;
+        char *redirect = strndup(currentState->command->line + REGEXMatch.rm_so, redirect_len);
 
         if (redirect == NULL) {
-            state->fatal_error = true;
+            currentState->fatal_error = true;
             return ERROR;
         }
         if (strstr(redirect, ">>")) {
-            state->command->stderr_overwrite = true;
+            currentState->command->stderr_overwrite = true;
         }
 
-        state->command->stderr_file = expand_path(env, err, redirect);
+        currentState->command->stderr_file = expand_path(env, err, redirect);
 
-        if (state->command->stderr_file == NULL) {
-            state->fatal_error = true;
+        if (currentState->command->stderr_file == NULL) {
+            currentState->fatal_error = true;
             free(redirect);
             return ERROR;
         }
         free(redirect);
-        state->command->line[match.rm_so] = '\0';
+        currentState->command->line[REGEXMatch.rm_so] = '\0';
     }
 
-    regex_result_out = regexec(state->out_redirect_regex,
-                               state->command->line, 1,
-                               &match, 0);
-    if (regex_result_out == 0) {
-        size_t redirect_len = match.rm_eo - match.rm_so;
-        char *redirect = strndup(state->command->line + match.rm_so, redirect_len);
+
+
+    /////////////////////////////
+
+    if (regexec(currentState->in_redirect_regex, currentState->command->line, 1, &REGEXMatch, 0) == 0) {
+        size_t redirect_len = REGEXMatch.rm_eo - REGEXMatch.rm_so;
+        char *redirect = strndup(currentState->command->line + REGEXMatch.rm_so, redirect_len);
 
         if (redirect == NULL) {
-            state->fatal_error = true;
+            currentState->fatal_error = true;
             return ERROR;
         }
-        if (strstr(redirect, ">>")) {
-            state->command->stdout_overwrite = true;
-        }
 
-        state->command->stdout_file = expand_path(env, err, redirect);
+        currentState->command->stdin_file = expand_path(env, err, redirect);
 
-        if (state->command->stdout_file == NULL) {
-            state->fatal_error = true;
+        if (currentState->command->stdin_file == NULL) {
+            currentState->fatal_error = true;
             free(redirect);
             return ERROR;
         }
 
         free(redirect);
-        state->command->line[match.rm_so] = '\0';
+        currentState->command->line[REGEXMatch.rm_so] = '\0';
     }
 
-    regex_result_in = regexec(state->in_redirect_regex,
-                              state->command->line, 1,
-                              &match, 0);
-    if (regex_result_in == 0) {
-        size_t redirect_len = match.rm_eo - match.rm_so;
-        char *redirect = strndup(state->command->line + match.rm_so, redirect_len);
 
-        if (redirect == NULL) {
-            state->fatal_error = true;
-            return ERROR;
+    wordExpResult = dc_wordexp(env, err, currentState->command->line, &wordExp, 0);
+    if (wordExpResult == 0) {
+
+        currentState->command->argc = wordExp.we_wordc;
+        currentState->command->argv = (char **) calloc(wordExp.we_wordc + 1, sizeof(char *));
+
+        for (size_t i = 0; i < wordExp.we_wordc; ++i) {
+            currentState->command->argv[i] = strdup(wordExp.we_wordv[i]);
         }
 
-        state->command->stdin_file = expand_path(env, err, redirect);
-
-        if (state->command->stdin_file == NULL) {
-            state->fatal_error = true;
-            free(redirect);
-            return ERROR;
-        }
-
-        free(redirect);
-        state->command->line[match.rm_so] = '\0';
-    }
-
-    wordexp_result = dc_wordexp(env, err, state->command->line, &exp, 0);
-    if (wordexp_result == 0) {
-
-        state->command->argc = exp.we_wordc;
-        state->command->argv = (char **) calloc(1, (exp.we_wordc + 2) * sizeof(char *));
-
-        for (size_t i = 0; i < exp.we_wordc; ++i) {
-            state->command->argv[i] = strdup(exp.we_wordv[i]);
-        }
-
-        state->command->argv[exp.we_wordc] = NULL;
-        state->command->command = strdup(exp.we_wordv[0]);
-        wordfree(&exp);
+        currentState->command->argv[wordExp.we_wordc] = NULL;
+        currentState->command->command = strdup(wordExp.we_wordv[0]);
+        wordfree(&wordExp);
 
     } else {
-        printf("unable to parse: %s\n", state->command->line);
-//        handle_error(env, err, state->command->command);
+        printf("unable to parse: %s\n", currentState->command->line);
     }
     return EXECUTE_COMMANDS;
+
 }
 
-void redirect(const struct dc_env *env, struct dc_error *err, void *arg) {
+void redirect(const struct dc_env *env, struct dc_error *err, struct state* currentState) {
 
-    struct state *state = (struct state *) arg;
     int fd;
+    int open_flags;
 
     if (dc_error_has_error(err)){
-        handle_error(env, err, state);
+        handle_error(env, err, currentState);
         return;
     }
 
-    if (state->command->stdin_file != NULL){
-        fd = open(state->command->stdin_file, O_RDONLY);
+    if (currentState->command->stdin_file != NULL){
+        fd = open(currentState->command->stdin_file, O_RDONLY);
         if (fd == -1){
-            perror("open");
+            perror("could not open file for redirect STDOUT");
             dc_error_has_error(err);
             close(fd);
             return;
@@ -136,36 +142,37 @@ void redirect(const struct dc_env *env, struct dc_error *err, void *arg) {
         dc_dup2(env, err, fd, STDIN_FILENO);
     }
 
-    if (state->command->stdout_file != NULL){
-        if (state->command->stderr_overwrite){
-            fd = open(state->command->stdout_file, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    if (currentState->command->stdout_file != NULL){
+        if (currentState->command->stderr_overwrite){
+            open_flags = O_WRONLY | O_CREAT | O_TRUNC;
         } else{
-            fd = open(state->command->stdout_file, O_WRONLY | O_CREAT | O_APPEND | S_IRUSR | S_IWUSR);
+            open_flags = O_WRONLY | O_CREAT | O_APPEND;
         }
+        fd = open(currentState->command->stdout_file, open_flags, S_IRUSR | S_IWUSR);
         if (fd == -1){
-            perror("open");
-            handle_error(env, err, state->command->command);
-            printf("redirect in command.c stdout.file");
+            perror("could not open file for redirect STDIN");
+            handle_error(env, err, currentState->command->command);
             close(fd);
             return;
         }
         dc_dup2(env, err, fd, STDOUT_FILENO);
     }
 
-    if (state->command->stderr_file != NULL){
-        if (state->command->stderr_overwrite){
-            fd = open(state->command->stderr_file, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    if (currentState->command->stderr_file != NULL){
+        if (currentState->command->stderr_overwrite){
+            open_flags = O_WRONLY | O_CREAT | O_TRUNC;
         } else{
-            fd = open(state->command->stderr_file, O_WRONLY | O_CREAT | O_APPEND | S_IRUSR | S_IWUSR);
+            open_flags = O_WRONLY | O_CREAT | O_APPEND;
         }
+        fd = open(currentState->command->stderr_file, open_flags, S_IRUSR | S_IWUSR);
         if (fd == -1){
-            handle_error(env, err, state->command->command);
-            printf("redirect in command.c stderr.file");
+            handle_error(env, err, currentState->command->command);
             close(fd);
             return;
         }
         dc_dup2(env, err, fd, STDERR_FILENO);
     }
+
 }
 
 
