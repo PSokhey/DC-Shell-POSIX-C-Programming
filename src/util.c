@@ -61,11 +61,12 @@ char **parse_path(const struct dc_env *env, struct dc_error *err, char *path_str
 }
 
 void do_reset_state(const struct dc_env *env,
-                    struct dc_error *err, struct state *state) {
+                    struct dc_error *err, struct state *currnetState) {
 
-    free(state->current_line);
-    state->current_line = NULL;
-    memset(err, 0, sizeof(state));
+    // reset the state properties. 
+    free(currnetState->current_line);
+    currnetState->current_line = NULL;
+    memset(err, 0, sizeof(currnetState));
 }
 
 char *expand_path(const struct dc_env *env, struct dc_error *err, char *file){

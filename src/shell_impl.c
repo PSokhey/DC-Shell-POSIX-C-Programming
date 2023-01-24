@@ -135,18 +135,13 @@ int parse_commands(const struct dc_env *env, struct dc_error *err, struct state*
 int execute_commands(const struct dc_env *env,
                      struct dc_error *err, struct state* currentState) {
 
-    if (strcmp(currentState->command->command, "cd") == 0) {
+    if (strcmp(currentState->command->command, "cd") == 0 ||
+        strcmp(currentState->command->command, "cd .") == 0 ||
+        strcmp(currentState->command->command, "cd /") == 0 ||
+        strcmp(currentState->command->command, "cd ~") == 0 ||
+        strcmp(currentState->command->command, "cd ..") == 0) {
         builtin_cd(env, err, currentState);
-    } else if(strcmp(currentState->command->command, "cd .") == 0){
-        builtin_cd(env, err, currentState);
-    } else if(strcmp(currentState->command->command, "cd /") == 0){
-        builtin_cd(env, err, currentState);
-    } else if(strcmp(currentState->command->command, "cd ~") == 0){
-        builtin_cd(env, err, currentState);
-    } else if(strcmp(currentState->command->command, "cd ..") == 0){
-        builtin_cd(env, err, currentState);
-    }
-    else if (strcmp(currentState->command->command, "exit") == 0) {
+    } else if (strcmp(currentState->command->command, "exit") == 0) {
         return EXIT;
     } else {
         execute(env, err, currentState, currentState->path);
@@ -160,8 +155,9 @@ int execute_commands(const struct dc_env *env,
     }
     return RESET_STATE;
 }
+
 int do_exit(const struct dc_env *env, struct dc_error *err, struct state* currentState) {
-    do_reset_state(env, err, currentState);
+    //do_reset_state(env, err, currentState);
     return DESTROY_STATE;
 }
 
